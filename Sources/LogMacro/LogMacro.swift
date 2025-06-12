@@ -1,11 +1,24 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 
-/// A macro that produces both a value and a string containing the
-/// source code that generated the value. For example,
-///
-///     #stringify(x + y)
-///
-/// produces a tuple `(x + y, "x + y")`.
 @freestanding(expression)
-public macro stringify<T>(_ value: T) -> (T, String) = #externalMacro(module: "LogMacroMacros", type: "StringifyMacro")
+public macro log(_ items: Any..., category: String = "Log") = #externalMacro(module: "LogMacroMacros", type: "LogMacro")
+
+@attached(member, names: named(logger))
+@available(iOS 14.0, macOS 11.0, *)
+public macro Logging() = #externalMacro(module: "LogMacroMacros", type: "LoggingMacro")
+
+import Foundation
+@_exported import OSLog
+
+// MARK: - Helper
+
+public enum LoggingMacroHelper {
+    @available(iOS 14.0, macOS 11.0, *)
+    public static func generateLogger(_ fileID: String = #fileID, category: String) -> Logger {
+    let bundleId = Bundle.main.bundleIdentifier ?? ""
+    let subsystem = fileID.components(separatedBy: "/").first.map { "\(bundleId) \($0)" }
+    return subsystem.map { Logger(subsystem: $0, category: category) }
+        ?? Logger()
+    }
+}
