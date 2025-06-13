@@ -9,7 +9,8 @@ import XCTest
 import LogMacroMacros
 
 let testMacros: [String: Macro.Type] = [
-    "stringify": StringifyMacro.self,
+    "log": LogMacro.self,
+    "Logger": LoggingMacro.self,
 ]
 #endif
 
@@ -17,12 +18,21 @@ final class LogMacroTests: XCTestCase {
     func testMacro() throws {
         #if canImport(LogMacroMacros)
         assertMacroExpansion(
-            """
-            #stringify(a + b)
-            """,
-            expandedSource: """
-            (a + b, "a + b")
-            """,
+            #"""
+            #log(a + b)
+            """#,
+            expandedSource: #"""
+            {
+                #if DEBUG
+                if #available(iOS 14.0, macOS 11.0, *) {
+                    let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "", category: "Log")
+                    logger.log("\(String(describing: a + b))")
+                } else {
+                    os_log("%{public}@", "\(String(describing: a + b))")
+                }
+                #endif
+            }()
+            """#,
             macros: testMacros
         )
         #else
@@ -34,10 +44,19 @@ final class LogMacroTests: XCTestCase {
         #if canImport(LogMacroMacros)
         assertMacroExpansion(
             #"""
-            #stringify("Hello, \(name)")
+            #log("The value = \(result)")
             """#,
             expandedSource: #"""
-            ("Hello, \(name)", #""Hello, \(name)""#)
+            {
+                #if DEBUG
+                if #available(iOS 14.0, macOS 11.0, *) {
+                    let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "", category: "Log")
+                    logger.log("\(String(describing: "The value = \(result)"))")
+                } else {
+                    os_log("%{public}@", "\(String(describing: "The value = \(result)"))")
+                }
+                #endif
+            }()
             """#,
             macros: testMacros
         )

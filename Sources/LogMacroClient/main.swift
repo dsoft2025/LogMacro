@@ -7,6 +7,8 @@ let (result, code) = (a + b, "a + b")
 
 print("The value \(result) was produced by the code \"\(code)\"")
 
+#log(a + b)
+#log("The value = \(result)")
 #log(a, b,category: "test")
 #log(a, b, 2)
 #log(a,b, 1)
