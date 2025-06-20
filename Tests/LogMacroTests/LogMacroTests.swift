@@ -25,8 +25,7 @@ final class LogMacroTests: XCTestCase {
             {
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "", category: "Log")
-                    logger.log("\(String(describing: a + b))")
+                    os_log(.default, log: OSLog(subsystem: Bundle.main.bundleIdentifier ?? "", category: "Log"), "\(String(describing: a + b))")
                 } else {
                     os_log("%{public}@", "\(String(describing: a + b))")
                 }
@@ -50,8 +49,7 @@ final class LogMacroTests: XCTestCase {
             {
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "", category: "Log")
-                    logger.log("\(String(describing: "The value = \(result)"))")
+                    os_log(.default, log: OSLog(subsystem: Bundle.main.bundleIdentifier ?? "", category: "Log"), "\(String(describing: "The value = \(result)"))")
                 } else {
                     os_log("%{public}@", "\(String(describing: "The value = \(result)"))")
                 }

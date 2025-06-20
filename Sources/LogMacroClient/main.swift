@@ -16,7 +16,7 @@ print("The value \(result) was produced by the code \"\(code)\"")
 #log("The value \(result) was produced by the code \"\(code)\"")
 let url = URL(string: "https://m.daum.net")
 let data = code.data(using: String.Encoding.utf8)!
-#log("response \(url) => \nsuccess : \(String(decoding: data, as: UTF8.self))")
+#log("response \(String(describing: url)) => \nsuccess : \(String(decoding: data, as: UTF8.self))")
 let c: () = #log(b)
 debugPrint(c, type(of: c), String(describing: c))
 let d: () = c

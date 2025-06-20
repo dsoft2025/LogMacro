@@ -50,8 +50,7 @@ public struct LogMacro: ExpressionMacro, CodeItemMacro {
             {
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "", category: \(literal: category.description))
-                    logger.log("\(raw: message)")
+                    os_log(.default, log: OSLog(subsystem: Bundle.main.bundleIdentifier ?? "", category: \(literal: category.description)), "\(raw: message)")
                 } else {
                     os_log("%{public}@", "\(raw: message)")
                 }
@@ -80,8 +79,7 @@ public struct LogMacro: ExpressionMacro, CodeItemMacro {
             """
             {
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "", category: \(literal: category.description))                    
-                    logger.info("\(raw: message)")
+                    os_log(.default, log: OSLog(subsystem: Bundle.main.bundleIdentifier ?? "", category: \(literal: category.description)), "\(raw: message)")
                 } else {
                     os_log("%{public}@", "\(raw: message)")
                 }
