@@ -21,11 +21,11 @@
 @Logging
 class Sample {
     init() {
-        logger.info("init")
+        #mlog("init")
     }
     
     func doSomething() {
-        logger.info("doSomething")
+        #mlog("doSomething")
     }
 }
 ```
@@ -55,8 +55,11 @@ iOS 10, macOS 10.12 이상에서 사용가능
 @available(iOS 14.0, macOS 11.0, *)
 public macro Logging() ...
 ```
+```swift
+public macro mlog(level: OSLogType = .default, _ items: Any..., category: String = "Log") = #externalMacro(module: "LogMacroMacros", type: "MemberLogMacro")
+```
 예제와 같이 @Logging 를 class 나 struct 에 추가하면
 통합 로깅 시스템 [Logger](https://developer.apple.com/documentation/os/logger) 형식의 logger 이라는 멤버가 생성된다.  
-멤버함수 등에서 logger.info("doSomething")와 같이 사용할 수 있다. 
+멤버함수 등에서 #mlog("doSomething")와 같이 사용할 수 있다. 
   
 iOS 14 이상, macOS 11 이상에서 사용가능  

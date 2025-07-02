@@ -11,6 +11,7 @@ import LogMacroMacros
 let testMacros: [String: Macro.Type] = [
     "log": LogMacro.self,
     "Logger": LoggingMacro.self,
+    "mlog": MemberLogMacro.self,
 ]
 #endif
 
@@ -25,9 +26,9 @@ final class LogMacroTests: XCTestCase {
             {
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    os_log(.default, log: OSLog(subsystem: Bundle.main.bundleIdentifier ?? "", category: "Log"), "\(String(describing: a + b))")
+                    os_log(.default, log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: "Log"), "\(String(describing: a + b))")
                 } else {
-                    os_log("%{public}@", "\(String(describing: a + b))")
+                    os_log("%{public}@", log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: "Log"), "\(String(describing: a + b))")
                 }
                 #endif
             }()
@@ -49,12 +50,36 @@ final class LogMacroTests: XCTestCase {
             {
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    os_log(.default, log: OSLog(subsystem: Bundle.main.bundleIdentifier ?? "", category: "Log"), "\(String(describing: "The value = \(result)"))")
+                    os_log(.default, log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: "Log"), "\(String(describing: "The value = \(result)"))")
                 } else {
-                    os_log("%{public}@", "\(String(describing: "The value = \(result)"))")
+                    os_log("%{public}@", log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: "Log"), "\(String(describing: "The value = \(result)"))")
                 }
                 #endif
             }()
+            """#,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func testMacroWithMember() throws {
+        #if canImport(LogMacroMacros)
+        assertMacroExpansion(
+            #"""
+            #mlog("x = \(self.x)", category: "Ele")
+            """#,
+            expandedSource: #"""
+            ({
+                #if DEBUG
+                if #available(iOS 14.0, macOS 11.0, *) {
+                    logger.log(level: .default, "\(String(describing: "x = \(self.x)"))")
+                } else {
+                    os_log("%{public}@", OSLog(subsystem: LoggingMacroHelper.subsystem(), category: "Ele"), "\(String(describing: "x = \(self.x)"))")
+                }
+                #endif
+                })()
             """#,
             macros: testMacros
         )

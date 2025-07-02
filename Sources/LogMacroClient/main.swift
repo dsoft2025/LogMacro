@@ -5,7 +5,7 @@ let b = 25
 
 let (result, code) = (a + b, "a + b")
 
-print("The value \(result) was produced by the code \"\(code)\"")
+print("By print,", "The value \(result) was produced by the code \"\(code)\"")
 
 #log(a + b)
 #log("The value = \(result)")
@@ -18,19 +18,31 @@ let url = URL(string: "https://m.daum.net")
 let data = code.data(using: String.Encoding.utf8)!
 #log("response \(String(describing: url)) => \nsuccess : \(String(decoding: data, as: UTF8.self))")
 let c: () = #log(b)
-debugPrint(c, type(of: c), String(describing: c))
+debugPrint("By debugPrint,", c, type(of: c), String(describing: c))
 let d: () = c
-print(type(of: d), d == ())
+print("By print,", type(of: d), d == ())
+NSLog("By NSLog, \(type(of: d)), \(d == ())")
+if #available(macOS 11.0, iOS 14.0, *) {
+    os_log(.default, log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: "os_log"), "\(type(of: d)), \(d == ())")
+}
+os_log("%{public}@", log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: "os_log(old)"), "\(type(of: d)), \(d == ())")
 
 @available(iOS 14.0, macOS 11.0, *)
 @Logging
 class Ele {
+    var x: Int = 200
     init() {
-        logger.info("init")
+        #if DEBUG
+            logger.info("init")
+        #endif
+        #mlog("x = \(self.x)", category: "Ele")
     }
     
     func doSomething() {
-        logger.info("doSomething")
+#if DEBUG
+        logger.debug("doSomething")
+        logger.log(level: .error, "test test")
+#endif
     }
 }
 

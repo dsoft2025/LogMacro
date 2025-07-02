@@ -45,14 +45,15 @@ public struct LogMacro: ExpressionMacro, CodeItemMacro {
             extractedExpr = node.arguments.dropLast(0)
         }
         let message = "\(extractedExpr.map({ String(describing: "\\(String(describing: \($0.expression)))") }).joined(separator: " "))"
+        let messageNew = "\(extractedExpr.map({ String(describing: "\\(String(describing: \($0.expression)))") }).joined(separator: " "))"
         
         return """
             {
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    os_log(.default, log: OSLog(subsystem: Bundle.main.bundleIdentifier ?? "", category: \(literal: category.description)), "\(raw: message)")
+                    os_log(.default, log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: messageNew)")
                 } else {
-                    os_log("%{public}@", "\(raw: message)")
+                    os_log("%{public}@", log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: message)")
                 }
                 #endif
             }() 
@@ -79,9 +80,9 @@ public struct LogMacro: ExpressionMacro, CodeItemMacro {
             """
             {
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    os_log(.default, log: OSLog(subsystem: Bundle.main.bundleIdentifier ?? "", category: \(literal: category.description)), "\(raw: message)")
+                    os_log(.default, log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: message)")
                 } else {
-                    os_log("%{public}@", "\(raw: message)")
+                    os_log("%{public}@", OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: message)")
                 }
             }
             """,
@@ -90,10 +91,51 @@ public struct LogMacro: ExpressionMacro, CodeItemMacro {
 }
 
 
+public struct MemberLogMacro: ExpressionMacro {
+    public static func expansion(of node: some SwiftSyntax.FreestandingMacroExpansionSyntax, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> SwiftSyntax.ExprSyntax {
+        guard (node.arguments.first?.expression) != nil else {
+            fatalError("The macro requires a value")
+        }
+        
+        var level: String = ".default"
+        let list: Slice<LabeledExprListSyntax>
+        if node.arguments.first?.label?.text == "level" {
+            level = node.arguments.first?.expression.trimmedDescription.replacingOccurrences(of: "\"", with: "") ?? ".default"
+            list = node.arguments.dropFirst()
+        } else {
+            list = node.arguments.dropFirst(0)
+        }
+
+        var category = "Log"
+        let extractedExpr: Slice<LabeledExprListSyntax>
+    
+        if list.last?.label?.text == "category" {
+            category = (list.last?.expression.trimmedDescription)!.replacingOccurrences(of: "\"", with: "")
+            extractedExpr = list.dropLast(1)
+        } else {
+            extractedExpr = list.dropLast(0)
+        }
+        let message = "\(extractedExpr.map({ String(describing: "\\(String(describing: \($0.expression)))") }).joined(separator: " "))"
+        
+        return """
+            ({
+                #if DEBUG
+                if #available(iOS 14.0, macOS 11.0, *) {
+                    logger.log(level: \(raw: level), "\(raw: message)")
+                } else {
+                    os_log("%{public}@", OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: message)")
+                }
+                #endif
+            })()
+            """
+    }
+}
+
 @main
 struct LogMacroPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         LoggingMacro.self,
         LogMacro.self,
+        MemberLogMacro.self
     ]
 }
