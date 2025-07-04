@@ -22,6 +22,9 @@ public struct LoggingMacro: MemberMacro {
         return [
           DeclSyntax(
             #"""
+            lazy var osLog: OSLog = {
+                OSLog(subsystem: LoggingMacroHelper.subsystem(#fileID), category: String(describing: Self.self)) 
+            }()
             lazy var logger: Logger = {
                 LoggingMacroHelper.generateLogger(category: String(describing: Self.self))
             }()
@@ -106,24 +109,16 @@ public struct MemberLogMacro: ExpressionMacro {
             list = node.arguments.dropFirst(0)
         }
 
-        var category = "Log"
-        let extractedExpr: Slice<LabeledExprListSyntax>
-    
-        if list.last?.label?.text == "category" {
-            category = (list.last?.expression.trimmedDescription)!.replacingOccurrences(of: "\"", with: "")
-            extractedExpr = list.dropLast(1)
-        } else {
-            extractedExpr = list.dropLast(0)
-        }
+        let extractedExpr: Slice<LabeledExprListSyntax> = list.dropLast(0)
         let message = "\(extractedExpr.map({ String(describing: "\\(String(describing: \($0.expression)))") }).joined(separator: " "))"
         
         return """
             ({
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    logger.log(level: \(raw: level), "\(raw: message)")
+                    logger.log(level: OSLogType\(raw: level), "\(raw: message)")
                 } else {
-                    os_log("%{public}@", OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: message)")
+                    os_log("%{public}@", log: osLog, type: OSLogType\(raw: level), "\(raw: message)")
                 }
                 #endif
             })()

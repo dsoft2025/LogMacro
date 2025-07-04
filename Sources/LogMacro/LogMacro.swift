@@ -4,12 +4,12 @@
 @freestanding(expression)
 public macro log(_ items: Any..., category: String = "Log") = #externalMacro(module: "LogMacroMacros", type: "LogMacro")
 
-@attached(member, names: named(logger))
+@attached(member, names: named(logger), named(osLog))
 @available(iOS 14.0, macOS 11.0, *)
 public macro Logging() = #externalMacro(module: "LogMacroMacros", type: "LoggingMacro")
 
 @freestanding(expression)
-public macro mlog(level: OSLogType = .default, _ items: Any..., category: String = "Log") = #externalMacro(module: "LogMacroMacros", type: "MemberLogMacro")
+public macro mlog(level: OSLogType = .default, _ items: Any...) = #externalMacro(module: "LogMacroMacros", type: "MemberLogMacro")
 
 import Foundation
 @_exported import OSLog

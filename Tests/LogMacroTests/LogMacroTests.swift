@@ -68,15 +68,15 @@ final class LogMacroTests: XCTestCase {
         #if canImport(LogMacroMacros)
         assertMacroExpansion(
             #"""
-            #mlog("x = \(self.x)", category: "Ele")
+            #mlog("x = \(self.x)")
             """#,
             expandedSource: #"""
             ({
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    logger.log(level: .default, "\(String(describing: "x = \(self.x)"))")
+                    logger.log(level: OSLogType.default, "\(String(describing: "x = \(self.x)"))")
                 } else {
-                    os_log("%{public}@", OSLog(subsystem: LoggingMacroHelper.subsystem(), category: "Ele"), "\(String(describing: "x = \(self.x)"))")
+                    os_log("%{public}@", log: osLog, type: OSLogType.default, "\(String(describing: "x = \(self.x)"))")
                 }
                 #endif
                 })()

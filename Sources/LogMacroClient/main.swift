@@ -35,12 +35,56 @@ class Ele {
         #if DEBUG
             logger.info("init")
         #endif
-        #mlog("x = \(self.x)", category: "Ele")
+        #mlog("x = \(self.x)")
     }
     
     func doSomething() {
+        let counter = Counter()
+        Task {
+            await counter.increment()
+        }
 #if DEBUG
         logger.debug("doSomething")
+        logger.log("x = \(self.x)")
+        logger.log(level: .error, "test test")
+#endif
+    }
+}
+
+@available(iOS 14.0, macOS 11.0, *)
+@Logging
+actor Counter {
+    var count :Int = 0
+    
+    func increment() {
+        #mlog("before count:\(self.count)")
+        self.count += 1
+        #mlog("after count:\(self.count)")
+    }
+}
+
+@available(iOS 14.0, macOS 11.0, *)
+@Logging
+struct Struct {
+    var x: Int = 200
+    init() {
+        #if DEBUG
+            logger.info("init")
+        #endif
+//        #mlog("x = \(self.x)", category: "Struct")
+//        #log("x = \(self.x)", category: "Struct")
+        #log("log from Struct", category: "Struct")
+        #mlog("mlog from Struct")
+    }
+    
+    /**
+    * mutating 이 필수
+    */
+    mutating func doSomething() {
+#if DEBUG
+        logger.debug("doSomething")
+//        logger.log("x = \(self.x)")
+        print("print By, x = \(x)")
         logger.log(level: .error, "test test")
 #endif
     }
@@ -49,6 +93,10 @@ class Ele {
 if #available(iOS 14.0, macOS 11.0, *) {
     let ele = Ele()
     ele.doSomething()
+    
+    let st = Struct()
+    var stNew = st
+    stNew.doSomething()
 } else {
     #log("Fallback on earlier versions")
 }

@@ -56,10 +56,13 @@ iOS 10, macOS 10.12 이상에서 사용가능
 public macro Logging() ...
 ```
 ```swift
-public macro mlog(level: OSLogType = .default, _ items: Any..., category: String = "Log") = #externalMacro(module: "LogMacroMacros", type: "MemberLogMacro")
+public macro mlog(level: OSLogType = .default, _ items: Any...)
 ```
 예제와 같이 @Logging 를 class 나 struct 에 추가하면
 통합 로깅 시스템 [Logger](https://developer.apple.com/documentation/os/logger) 형식의 logger 이라는 멤버가 생성된다.  
 멤버함수 등에서 #mlog("doSomething")와 같이 사용할 수 있다. 
+
+단, struct 의 경우에는 제약이 있다.  
+현재 self 를 사용할 수 없다. 
   
 iOS 14 이상, macOS 11 이상에서 사용가능  
