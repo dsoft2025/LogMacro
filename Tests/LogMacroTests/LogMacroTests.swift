@@ -8,7 +8,7 @@ import XCTest
 #if canImport(LogMacroMacros)
 import LogMacroMacros
 
-let testMacros: [String: Macro.Type] = [
+nonisolated(unsafe) let testMacros: [String: Macro.Type] = [
     "log": LogMacro.self,
     "Logger": LoggingMacro.self,
     "mlog": MemberLogMacro.self,
@@ -74,12 +74,40 @@ final class LogMacroTests: XCTestCase {
             ({
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    logger.log(level: OSLogType.default, "\(String(describing: "x = \(self.x)"))")
+                    self.logger.log(level: OSLogType.default, "\(String(describing: "x = \(self.x)"))")
                 } else {
-                    os_log("%{public}@", log: osLog, type: OSLogType.default, "\(String(describing: "x = \(self.x)"))")
+                    os_log("%{public}@", log: self.osLog, type: OSLogType.default, "\(String(describing: "x = \(self.x)"))")
                 }
                 #endif
                 })()
+            """#,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func testMacroWithMemberInClosure() throws {
+        #if canImport(LogMacroMacros)
+        assertMacroExpansion(
+            #"""
+            let closure = {
+                #mlog("Inside closure: \(self.value)")
+            }
+            """#,
+            expandedSource: #"""
+            let closure = {
+                ({
+                    #if DEBUG
+                    if #available(iOS 14.0, macOS 11.0, *) {
+                        self.logger.log(level: OSLogType.default, "\(String(describing: "Inside closure: \(self.value)"))")
+                    } else {
+                        os_log("%{public}@", log: self.osLog, type: OSLogType.default, "\(String(describing: "Inside closure: \(self.value)"))")
+                    }
+                    #endif
+                    })()
+            }
             """#,
             macros: testMacros
         )

@@ -22,10 +22,10 @@ public struct LoggingMacro: MemberMacro {
         return [
           DeclSyntax(
             #"""
-            lazy var osLog: OSLog = {
+            private lazy var osLog: OSLog = {
                 OSLog(subsystem: LoggingMacroHelper.subsystem(#fileID), category: String(describing: Self.self)) 
             }()
-            lazy var logger: Logger = {
+            private lazy var logger: Logger = {
                 LoggingMacroHelper.generateLogger(category: String(describing: Self.self))
             }()
             """#),
@@ -33,7 +33,7 @@ public struct LoggingMacro: MemberMacro {
     }
 }
 
-public struct LogMacro: ExpressionMacro, CodeItemMacro {
+public struct LogMacro: ExpressionMacro {
     public static func expansion(of node: some SwiftSyntax.FreestandingMacroExpansionSyntax, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> SwiftSyntax.ExprSyntax {
         guard (node.arguments.first?.expression) != nil else {
             fatalError("The macro requires a value")
@@ -48,48 +48,18 @@ public struct LogMacro: ExpressionMacro, CodeItemMacro {
             extractedExpr = node.arguments.dropLast(0)
         }
         let message = "\(extractedExpr.map({ String(describing: "\\(String(describing: \($0.expression)))") }).joined(separator: " "))"
-        let messageNew = "\(extractedExpr.map({ String(describing: "\\(String(describing: \($0.expression)))") }).joined(separator: " "))"
         
         return """
             {
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    os_log(.default, log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: messageNew)")
+                    os_log(.default, log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: message)")
                 } else {
                     os_log("%{public}@", log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: message)")
                 }
                 #endif
             }() 
             """
-    }
-    
-    // TODO: - 아직 사용할 수 없음
-    public static func expansion(of node: some SwiftSyntax.FreestandingMacroExpansionSyntax, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> [SwiftSyntax.CodeBlockItemSyntax] {
-        guard ((node.arguments.first?.expression) != nil) else {
-            fatalError("The macro requires a value")
-        }
-
-        var category = "Log"
-        let extractedExpr: Slice<LabeledExprListSyntax>
-        if node.arguments.last?.label?.text == "category" {
-            category = (node.arguments.last?.expression.trimmedDescription)!.replacingOccurrences(of: "\"", with: "")
-            extractedExpr = node.arguments.dropLast(1)
-        } else {
-            extractedExpr = node.arguments.dropLast(0)
-        }
-        let message = "\(extractedExpr.map({ String(describing: "\\(String(describing: \($0.expression)))") }).joined(separator: " "))"
-        
-        return [
-            """
-            {
-                if #available(iOS 14.0, macOS 11.0, *) {
-                    os_log(.default, log: OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: message)")
-                } else {
-                    os_log("%{public}@", OSLog(subsystem: LoggingMacroHelper.subsystem(), category: \(literal: category.description)), "\(raw: message)")
-                }
-            }
-            """,
-        ]
     }
 }
 
@@ -116,9 +86,9 @@ public struct MemberLogMacro: ExpressionMacro {
             ({
                 #if DEBUG
                 if #available(iOS 14.0, macOS 11.0, *) {
-                    logger.log(level: OSLogType\(raw: level), "\(raw: message)")
+                    self.logger.log(level: OSLogType\(raw: level), "\(raw: message)")
                 } else {
-                    os_log("%{public}@", log: osLog, type: OSLogType\(raw: level), "\(raw: message)")
+                    os_log("%{public}@", log: self.osLog, type: OSLogType\(raw: level), "\(raw: message)")
                 }
                 #endif
             })()

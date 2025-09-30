@@ -49,6 +49,17 @@ class Ele {
         logger.log(level: .error, "test test")
 #endif
     }
+    
+    func testClosure() {
+        // 이 코드는 작동함 - 일반 메서드에서 사용
+        #mlog("Direct call: \(self.x)")
+        
+        // 이제 이 코드도 작동할 것임 - closure에서 logger 사용
+        let closure = {
+            #mlog("Inside closure: \(self.x)")
+        }
+        closure()
+    }
 }
 
 @available(iOS 14.0, macOS 11.0, *)
@@ -93,6 +104,7 @@ struct Struct {
 if #available(iOS 14.0, macOS 11.0, *) {
     let ele = Ele()
     ele.doSomething()
+    ele.testClosure()
     
     let st = Struct()
     var stNew = st
